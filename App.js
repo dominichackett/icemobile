@@ -10,6 +10,7 @@ import Write from './src/Components/Write';
 import Login from './src/Components/Login'
 import Qrcode from './src/Components/Qrcode';
 import Contacts from './src/Components/Contacts'
+import Logout from './src/Components/Logout';
 import {Feather,MaterialCommunityIcons,AntDesign } from '@expo/vector-icons'
 import { AppRegistry } from "react-native";
 import "./globals.js";
@@ -31,9 +32,22 @@ export default function App() {
   const authOptions = ['discord','email_passwordless','facebook','github', 'google', 'twitter'];
   const [selectedAuthOption,setSelectedAuthOption] = useState()
   const [isLoggedIn,setIsLoggedIn] = useState((web3auth?.privKey ? true:false))
+  
+  const onLogout = async() => {
+    if (!web3auth) {
+     
+      return;
+    }
+
+    
+    await web3auth.logout();
+
+    if (!web3auth.privKey) {
+       setIsLoggedIn(false)
+    }
+  };
 
   const doLogin = async(arg)=>{
-    console.warn(OPENLOGIN_NETWORK)
     const scheme = "icealerts"; // Or your desired app redirection scheme
     const resolvedRedirectUrl = `${scheme}://openlogin`;
    
@@ -45,7 +59,6 @@ export default function App() {
     });
     setIsLoggedIn(true)
     var userInfo = web3auth.userInfo();
-    console.warn(userInfo)  
   }catch(error)
   {
   }
@@ -55,7 +68,6 @@ export default function App() {
   useEffect(()=>{
     async function checkLogin(){
       await web3auth.init()
-      console.warn(web3auth?.privKey)
       if(web3auth?.privKey)
       {
          setIsLoggedIn(true)
@@ -68,17 +80,24 @@ export default function App() {
   return (
     
     <SafeAreaView style={styles.container}>
-    {isLoggedIn && <NavigationContainer>
+    {isLoggedIn && <NavigationContainer
+      options={{
+        headerRight: () => (
+          <Home />
+        ),
+      }}>
       <ToastProvider>
       <Tab.Navigator  screenOptions={({ route }) => ({
         tabBarActiveTintColor: 'red',    // Color for active tab
         tabBarInactiveTintColor: 'grey',  // Color for inactive tab
-        tabBarStyle:{backgroundColor:'#303030'}
+        tabBarStyle:{backgroundColor:'#303030'},headerRight: () => (
+          <Logout onLogout={onLogout}/>
+        )
       })}  >
-        <Tab.Screen name={'Home'} component={Home} options={{tabBarIcon:({focused})=> <Feather name={'home'} size={25} color={(focused ? "red":"white")} />}}/>
-        <Tab.Screen name={'Scan'} component={Main} options={{tabBarIcon:({focused})=> <MaterialCommunityIcons name="credit-card-scan" size={25}  color={(focused ? "red":"white")} />}}/>
-        <Tab.Screen  initialParams={{web3auth:web3auth}} name={'Edit'} component={Write} options={{tabBarIcon:({focused})=> <AntDesign name="addfile" size={25}  color={(focused ? "red":"white")} />}}/>
-        <Tab.Screen initialParams={{web3auth:web3auth}} name={'Contact'} component={Contacts} options={{tabBarIcon:({focused})=> <AntDesign name={'contacts'} size={25} color={(focused ? "red":"white")} />}}/>
+        <Tab.Screen name={'Home'} component={Home} options={{  tabBarIcon:({focused})=> <Feather name={'home'} size={25} color={(focused ? "red":"white")} />}}/>
+        <Tab.Screen name ="Scan"  component={Main} options={{tabBarIcon:({focused})=> <MaterialCommunityIcons name="credit-card-scan" size={25}  color={(focused ? "red":"white")} />,headerTitle:'Scan Smart Tag'}}/>
+        <Tab.Screen  initialParams={{web3auth:web3auth}} name="Register"  component={Write} options={{tabBarIcon:({focused})=> <AntDesign name="addfile" size={25}  color={(focused ? "red":"white")} />,headerTitle:'Register Tag'}}/>
+        <Tab.Screen initialParams={{web3auth:web3auth}} name="Contacts" component={Contacts} options={{tabBarIcon:({focused})=> <AntDesign name={'contacts'} size={25} color={(focused ? "red":"white")} />,headerTitle:'+ Emergency Contacts'}}/>
 
         <Tab.Screen initialParams={{web3auth:web3auth}} name={'Settings'} component={Qrcode} options={{tabBarIcon:({focused})=> <Feather name={'settings'} size={25} color={(focused ? "red":"white")} />}}/>
 

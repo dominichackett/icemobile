@@ -11,7 +11,8 @@ import "react-native-get-random-values"
 import "@ethersproject/shims"
 
 import {ethers} from 'ethers'
-// Pre-step, call this before any NFC operations
+import { useToast } from "react-native-toast-notifications";
+
 
 const emergencySchema = Yup.object().shape({
     firstname:Yup.string().required("First name is required"),
@@ -30,12 +31,11 @@ NfcManager.start();export default function Write({route}) {
   const bloodTypes = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
   const {web3auth} = route.params
   const [wallet,setWallet] = useState()
-   
+  const toast = useToast()
+ 
   useEffect(()=>{
-     console.warn(web3auth.privKey)
      const _wallet = new ethers.Wallet(web3auth.privKey)
      setWallet(_wallet)
-     console.warn(_wallet.address)
 
   },[])
   async function writeNdef(values) {
@@ -59,8 +59,13 @@ NfcManager.start();export default function Write({route}) {
         setButtonColor('green')
       }
     } catch (ex) {
-      console.warn(ex);
-      console.log(ex)
+      toast.show("Error Writing Data to NFC Tag", {
+        type: "danger",
+        placement: "bottom",
+        duration: 4000,
+        offset: 120,
+        animationType: "slide-in",
+      });
     } finally {
       // STEP 4
       NfcManager.cancelTechnologyRequest();
@@ -100,7 +105,7 @@ NfcManager.start();export default function Write({route}) {
           <Picker.Item key={bloodType} label={bloodType} value={bloodType} />
         ))}
       </Picker>
-      <Button title="Show Date Picker" onPress={showDatepicker} />
+      <Button title="Select Date of Birth" onPress={showDatepicker} />
       {showDatePicker && (
         <DateTimePicker
           value={selectedDate}

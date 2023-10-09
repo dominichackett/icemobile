@@ -3,6 +3,8 @@ import { useState ,useEffect} from 'react';
 import {View, Text,Image, TouchableOpacity, StyleSheet} from 'react-native';
 import NfcManager, {NfcTech,Ndef} from 'react-native-nfc-manager';
 import {MaterialCommunityIcons } from '@expo/vector-icons'
+import { useToast } from "react-native-toast-notifications";
+
 import Tag from './Tag'
 // Pre-step, call this before any NFC operations
 NfcManager.start();
@@ -20,6 +22,8 @@ export default function Splash() {
   const [contactphone,setContactPhone] = useState()
   const [dob,setDOB] = useState()
   const [publicKey,setPublicKey] = useState()
+  const toast = useToast()
+
  const closeForm = ()=>{
     setTagRead(false)
  }
@@ -54,6 +58,19 @@ export default function Splash() {
       const tag = await NfcManager.getTag();
       //console.warn('Tag found', tag);
      // console.warn(tag.ndefMessage.length)
+     if(tag.ndefMessage.length !=9)
+     {
+      toast.show("Error Not a Valid ICE Alert Card.", {
+        type: "danger",
+        placement: "bottom",
+        duration: 4000,
+        offset: 120,
+        animationType: "slide-in",
+      });
+      return
+
+}
+     
       //console.warn(Ndef.util.bytesToString(tag.ndefMessage[1].payload))
       setFirstName(Ndef.util.bytesToString(tag.ndefMessage[0].payload))
       setLastName(Ndef.util.bytesToString(tag.ndefMessage[1].payload))
