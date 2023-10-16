@@ -29,12 +29,12 @@ NfcManager.start();export default function Write({route}) {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [buttonColor,setButtonColor] = useState("green")
   const bloodTypes = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
-  const {web3auth} = route.params
+  const {privateKey} = route.params
   const [wallet,setWallet] = useState()
   const toast = useToast()
  
   useEffect(()=>{
-     const _wallet = new ethers.Wallet(web3auth.privKey)
+     const _wallet = new ethers.Wallet(privateKey)
      setWallet(_wallet)
 
   },[])

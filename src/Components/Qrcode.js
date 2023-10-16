@@ -10,14 +10,14 @@ import {ethers} from 'ethers'
 import Clipboard from '@react-native-clipboard/clipboard';
 
 export default function Qrcode({route}) {
-    const {web3auth} = route.params
+    const {privateKey} = route.params
     const [wallet,setWallet] = useState()
     const copyToClipboard = () => {
         Clipboard.setString(wallet.address);
       };
 
     useEffect(()=>{
-        const _wallet = new ethers.Wallet(web3auth.privKey)
+        const _wallet = new ethers.Wallet(privateKey)
         setWallet(_wallet)
    
      },[])

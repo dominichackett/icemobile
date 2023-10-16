@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "581299379124",
+    "project_id": "ice-smart-tags",
+    "storage_bucket": "ice-smart-tags.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:581299379124:android:236b3d926bc1acedc230e1",
+        "android_client_info": {
+          "package_name": "com.dominichackett.icemobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB8dlprwx9NH5EKM-Dn4FjIcSwDJVYu4SU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -6,7 +6,7 @@ import "react-native-get-random-values"
 
 import "@ethersproject/shims"
 
-import {ethers,isAddress} from 'ethers'
+import {ethers} from 'ethers'
 import { useToast } from "react-native-toast-notifications";
 import { AntDesign } from '@expo/vector-icons'; 
 import * as Yup from 'yup'
@@ -43,7 +43,7 @@ export default function Contacts() {
 
   const handleBarCodeScanned = ({ type, data }) => {
     setScanned(true);
-    if(isAddress(data))
+    if(ethers.utils.isAddress(data))
     {
         setAddress(data)
         setValidAddress(true)
@@ -132,8 +132,8 @@ useEffect(()=>{
      
 {address &&     <Text style={styles.text}>{address}</Text>
 }
-
-    <ScrollView>
+    
+    <ScrollView >
     <FlatList data={contacts} 
       keyExtractor={(item)=>item.address}
       renderItem={({item})=>(
