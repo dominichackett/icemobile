@@ -12,20 +12,36 @@ import { AntDesign } from '@expo/vector-icons';
 import * as Yup from 'yup'
 import { Formik } from 'formik';
 import { ConfirmDialog } from 'react-native-simple-dialogs';
-
+import { iceContractABI,iceContractAddress } from '../../contracts';
 const contactSchema = Yup.object().shape({
   name:Yup.string().required("Name is required"),
  
 })
-export default function Contacts() {
+export default function Contacts({route}) {
   const [hasPermission, setHasPermission] = useState(null);
   const [scanned, setScanned] = useState(false);
   const isFocused = useIsFocused();
   const [address,setAddress] = useState()
   const [validAddress,setValidAddress] = useState(false)
-  const [contacts,setContacts] = useState([{name:'Dominic Hackett',address:"0x01231"},{name:'Wife',address:"0x01232"},{name:'Mother',address:"0x01233"},{name:'Father',address:"0x012322"},{name:'Mother-in-law',address:"0x012335"}])
+  const [contacts,setContacts] = useState([])
   const [dialogVisible,setDialogVisible] = useState(false)
   const toast = useToast()
+  const {privateKey} = route.params
+  const [wallet,setWallet] = useState()
+  const [signer,setSigner] = useState()
+  useEffect(()=>{
+    const _wallet = new ethers.Wallet(privateKey)
+    setWallet(_wallet)
+    const provider = new ethers.providers.JsonRpcProvider(
+     "https://api.calibration.node.glif.io/rpc/v1"
+   );
+
+   setSigner(_wallet.connect(provider))
+
+
+ },[])
+
+ 
   useEffect(() => {
     const getBarCodeScannerPermissions = async () => {
       const { status } = await BarCodeScanner.requestPermissionsAsync();
@@ -94,6 +110,44 @@ useEffect(()=>{
 
   const saveContact = async(contact)=>{
       setDialogVisible(true)
+      addContact(contact.name)
+
+  }
+
+
+  const addContact = async(name)=>
+  {
+
+    const contract = new ethers.Contract(iceContractAddress, iceContractABI,signer);
+
+     try{
+
+      let tx = await contract.callStatic.addEmergencyContact( address,name)
+      let tx1 = await contract.addEmergencyContact( address,name)
+      await  tx1.wait()
+      toast.show("Emergency contact successfully registered.", {
+        type: "success",
+        placement: "bottom",
+        duration: 4000,
+        offset: 120,
+        animationType: "slide-in",
+      });
+    
+
+
+     }catch(error)
+     {
+       console.log(error)
+      toast.show("Error adding emergency contact.", {
+        type: "danger",
+        placement: "bottom",
+        duration: 4000,
+        offset: 120,
+        animationType: "slide-in",
+      });
+    } 
+
+     
 
   }
 

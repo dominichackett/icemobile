@@ -1,51 +1,77 @@
 import React from 'react';
-import {View,Text,ScrollView ,TouchableOpacity, StyleSheet,Image} from 'react-native';
-import { FontAwesome5,MaterialIcons } from '@expo/vector-icons'; 
+import {View,Button,Image, StyleSheet} from 'react-native';
+import { useToast } from "react-native-toast-notifications";
+import { useState,useEffect } from 'react';
+import { BarCodeScanner } from 'expo-barcode-scanner';
+import { ethers } from 'ethers';
 const iconSize = 104
 export default function Login(props) {
-    function doLogin(arg)
+    const [hasPermission, setHasPermission] = useState(null);
+    const toast = useToast()
+    const [scanned, setScanned] = useState(false);
+    const [privateKey,setPrivateKey] = useState()
+
+    function isValidPrivateKey(_privateKey) {
+        try {
+          const wallet = new ethers.Wallet(_privateKey);
+        return true  
+        } catch (error) {
+          return false;
+        }
+      }
+    const doLogin = ({ type, data }) => 
     {
-         if(props.login)
-         { 
-            props.login(arg)
-         }
-    }
+
+        if(isValidPrivateKey(data))
+         {
+            setPrivateKey(data)
+            setScanned(true)
+
+         } 
+         
+          console.log(data)
+         
+
+ }
+
+
+ const resetScanner = ()=>{
+    setScanned(false)
+    setPrivateKey(null)
+ }
+
+
+    useEffect(() => {
+      const getBarCodeScannerPermissions = async () => {
+        const { status } = await BarCodeScanner.requestPermissionsAsync();
+        setHasPermission(status === 'granted');
+      };
+  
+      getBarCodeScannerPermissions();
+    }, []);
+  
     return (
-    <ScrollView >
-     <Text style={styles.text}>Login With</Text>
-    <View style={styles.container}> 
-    <TouchableOpacity onPress={()=> doLogin("discord")}>        
-    <FontAwesome5 name="discord" size={iconSize} color="#5865F2" style={styles.item} />
-    </TouchableOpacity>
-    <TouchableOpacity onPress={()=>doLogin("email_passwordless")}>        
+        <View style={styles.container}>
    
-    <MaterialIcons name="email" style={styles.item} size={iconSize} color="black" />
-    </TouchableOpacity>
-    <TouchableOpacity onPress={()=>doLogin("facebook")}>        
-   
-    <FontAwesome5 name="facebook-square" size={iconSize} color="#1877F2" style={styles.item}/>
-   </TouchableOpacity>
-   <TouchableOpacity onPress={()=>doLogin("github")}>        
-   
-    <FontAwesome5 name="github-square" size={iconSize} color="black" style={styles.item}/>
-    </TouchableOpacity>
-    <TouchableOpacity onPress={()=>doLogin("google")}>        
-   
-    <FontAwesome5 name="google-plus-square" size={iconSize} color="#DB4437" style={styles.item}/>
-    </TouchableOpacity>
-
-    <TouchableOpacity onPress={()=>doLogin("twitter")}>        
-   
-    <FontAwesome5 name="twitter-square" size={iconSize} color="#1DA1F2" style={styles.item}/>
-    </TouchableOpacity>
-
-    <Image
+    <BarCodeScanner
+        onBarCodeScanned={scanned ? undefined : doLogin}
+      style={styles.image}
+    />
+          <View style={styles.buttonContainer}>
+    <Button title={'Scan Again'} onPress={() => resetScanner()} />
+    {scanned && privateKey && (
+      <View style={styles.buttonSpacing} />
+    )}
+    {scanned && privateKey && (
+      <Button title={'Login'} onPress={()=>props.login(privateKey)} />
+    )}
+  </View>
+  <Image
         source={require('../../assets/ICE1.png')}
         style={styles.image}
       />
-        </View>
-      
-        </ScrollView>
+
+    </View>
   );
 }
 
@@ -53,9 +79,6 @@ export default function Login(props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    flexDirection: 'row', // Arrange items horizontally
-    flexWrap: 'wrap',     // Wrap items to the next row
-    padding: 10,
     alignItems: 'center',
     justifyContent: 'center',
     
@@ -109,13 +132,22 @@ const styles = StyleSheet.create({
 
     },
     image: {
-      marginTop:18,
-      marginBottom:10,  
-      width: 190,
-      height: 190,
-      marginLeft:4
+      width: 250,
+      height: 250,
+      marginTop:12
+     
+   
     }, item: {
        margin:20,
              },
-
+             buttonContainer: {
+                flexDirection: 'row', // Arrange buttons horizontally
+                alignItems: 'center',  // Align buttons vertically in the center
+                marginBottom:8,
+                marginTop:8
+              }
+              ,
+              buttonSpacing: {
+                width: 10, // Adjust the spacing as needed
+              },
 });

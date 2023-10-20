@@ -34,15 +34,21 @@ import {ethers} from 'ethers'
 import messaging from '@react-native-firebase/messaging';
 
 const Tab = createBottomTabNavigator()
-
+const web3auth = new Web3Auth(WebBrowser, EncryptedStorage, {
+  clientId:"BB-gReLXTf6JrTGqEsbDNabY0jPvHVnpNUVAX06zapsu6qBzRIWPgqerki2FUmLmh4aYZGPp0XkjC6ux0Vy-DsI",
+  network: OPENLOGIN_NETWORK.SAPPHIRE_DEVNET, // MAINNET, AQUA,  CYAN or TESTNET
+  whiteLabel: {
+    name: 'Safe'
+  }
+});
 
 
 export default function App() {
   const [text,setText] = useState("ICE ALERTS")
   const authOptions = ['discord','email_passwordless','facebook','github', 'google', 'twitter'];
   const [selectedAuthOption,setSelectedAuthOption] = useState()
-  const [isLoggedIn,setIsLoggedIn] = useState()
-  const [privateKey,setPrivateKey] = useState()
+  const [isLoggedIn,setIsLoggedIn] = useState((web3auth?.privKey ? true:false))
+  
   async function requestUserPermission() {
     const authStatus = await messaging().requestPermission();
     const enabled =
@@ -81,24 +87,34 @@ export default function App() {
 
   },[])
   const onLogout = async() => {
-    await EncryptedStorage.setItem(
-      "privateKey",null );
-      setPrivateKey(null)
-    setIsLoggedIn(false)
+    if (!web3auth) {
+     
+      return;
+    }
+
+    
+    await web3auth.logout();
+
+    if (!web3auth.privKey) {
+       setIsLoggedIn(false)
+    }
   };
 
   const doLogin = async(arg)=>{
-
-
-   try { 
-
-
-    await EncryptedStorage.setItem(
-      "privateKey",arg  );
-
-    setPrivateKey(arg)
+    const scheme = "icealerts"; // Or your desired app redirection scheme
+    const resolvedRedirectUrl = `${scheme}://openlogin`;
+   
+    try{
+    await web3auth.login({
+      redirectUrl: resolvedRedirectUrl,
+      mfaLevel: "optional", // Pass on the mfa level of your choice: default, optional, mandatory, none
+     loginProvider: arg, // Pass on the login provider of your choice: google, facebook, discord, twitch, twitter, github, linkedin, apple, etc.
+    });
     setIsLoggedIn(true)
-    const _wallet = new ethers.Wallet(arg)
+    var userInfo = web3auth.userInfo();
+    console.log(userInfo)
+    console.log(web3auth)
+    const _wallet = new ethers.Wallet(web3auth.privKey)
     const goerliProvider = ethers.getDefaultProvider("goerli");
 
     const signer = await _wallet.connect(goerliProvider)
@@ -125,17 +141,12 @@ export default function App() {
   }
   useEffect(()=>{
     async function checkLogin(){
-      try {   
-        const key = await EncryptedStorage.getItem("privateKey");
-        console.log(key)
-        if (key !== undefined && key != null) {
-            // Congrats! You've just retrieved your first value!
-            setPrivateKey(key)
-            setIsLoggedIn(true)
-           }
-    } catch (error) {
-        // There was an error on the native side
-    }
+      await web3auth.init()
+      if(web3auth?.privKey)
+      {
+         setIsLoggedIn(true)
+         
+      }
     }
     checkLogin()
   },[])
@@ -158,12 +169,12 @@ export default function App() {
         )
       })}  >
         <Tab.Screen name={'Home'} component={Home} options={{  tabBarIcon:({focused})=> <Feather name={'home'} size={25} color={(focused ? "red":"white")} />}}/>
-        <Tab.Screen initialParams={{privateKey:privateKey}} name ="Scan"  component={Main} options={{tabBarIcon:({focused})=> <MaterialCommunityIcons name="credit-card-scan" size={25}  color={(focused ? "red":"white")} />,headerTitle:'Scan Smart Tag'}}/>
-        <Tab.Screen  initialParams={{privateKey:privateKey}} name="Register"  component={Write} options={{tabBarIcon:({focused})=> <AntDesign name="addfile" size={25}  color={(focused ? "red":"white")} />,headerTitle:'Register Tag'}}/>
-        <Tab.Screen initialParams={{privateKey:privateKey}} name="Contacts" component={Contacts} options={{tabBarIcon:({focused})=> <AntDesign name={'contacts'} size={25} color={(focused ? "red":"white")} />,headerTitle:'+ Emergency Contacts'}}/>
-        <Tab.Screen initialParams={{privateKey:privateKey}} name={'Notifications'} component={Notifications} options={{tabBarIcon:({focused})=> <Ionicons name={'notifications'} size={25} color={(focused ? "red":"white")} />}}/>
+        <Tab.Screen initialParams={{privateKey:web3auth.privKey}} name ="Scan"  component={Main} options={{tabBarIcon:({focused})=> <MaterialCommunityIcons name="credit-card-scan" size={25}  color={(focused ? "red":"white")} />,headerTitle:'Scan Smart Tag'}}/>
+        <Tab.Screen  initialParams={{privateKey:web3auth.privKey}} name="Register"  component={Write} options={{tabBarIcon:({focused})=> <AntDesign name="addfile" size={25}  color={(focused ? "red":"white")} />,headerTitle:'Register Tag'}}/>
+        <Tab.Screen initialParams={{privateKey:web3auth.privKey}} name="Contacts" component={Contacts} options={{tabBarIcon:({focused})=> <AntDesign name={'contacts'} size={25} color={(focused ? "red":"white")} />,headerTitle:'+ Emergency Contacts'}}/>
+        <Tab.Screen initialParams={{privateKey:web3auth.privKey}} name={'Notifications'} component={Notifications} options={{tabBarIcon:({focused})=> <Ionicons name={'notifications'} size={25} color={(focused ? "red":"white")} />}}/>
 
-        <Tab.Screen initialParams={{privateKey:privateKey}} name={'Settings'} component={Qrcode} options={{tabBarIcon:({focused})=> <Feather name={'settings'} size={25} color={(focused ? "red":"white")} />}}/>
+        <Tab.Screen initialParams={{privateKey:web3auth.privKey}} name={'Settings'} component={Qrcode} options={{tabBarIcon:({focused})=> <Feather name={'settings'} size={25} color={(focused ? "red":"white")} />}}/>
 
     
     </Tab.Navigator>

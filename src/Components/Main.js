@@ -97,72 +97,8 @@ export default function Splash({route}) {
       setPublicKey(Ndef.util.bytesToString(tag.ndefMessage[8].payload))
 
       setTagRead(true) 
- //const recipient = new ethers.Wallet(privateKey)
- //const provider = ethers.getDefaultProvider("goerli");
-       // const provider = new ethers.providers.InfuraProvider("goerli","1627072ef1944debb4daefbb326adb7e")
-   //    const wallet = new ethers.Wallet("0xf39811dc2e638e6bd653d182758298fa2b97ebc19eb13709fd99bed46083f653") 
-  //const signer = wallet.connect(provider)
-//const signer = await wallet.connect(provider);
-// Replace 'wss://ethereum-goerli.publicnode.com' with the WebSocket URL of the Ethereum network you want to use
-const rpcURL = 'wss://ethereum-goerli.publicnode.com';
-
-//const web3 = new Web3(new Web3.providers.WebsocketProvider(rpcURL));
-
-// Create a wallet using the provided private key
-//const wallet = web3.eth.accounts.privateKeyToAccount("0xf39811dc2e638e6bd653d182758298fa2b97ebc19eb13709fd99bed46083f653");
-const providerUrl = "https://rpc.ankr.com/eth"; // Or your desired provider url
-const provider = ethers.getDefaultProvider(rpcURL);
-
-const wallet = new ethers.Wallet(privateKey,provider) 
-
-//console.log('Address:',await wallet.getChainId());
-//console.log('Private Key:',await wallet.getAddress());
-//onsole.log("provider:" ,wallet.provider)
-const env = ENV.STAGING
-//const user =  new PushAPI(wallet)
-//console.log (user)
-//console.log(wallet)
-const encoder = new TextEncoder();
-
-// Encode a JavaScript string into a Uint8Array
-const text = "Hello, world!";
-const encodedData = encoder.encode(text);
-
-// The encodedData is now a Uint8Array containing the UTF-8 encoded text
-console.log(encodedData); // This will output the binary representation of the text
-
-const user = await PushAPI.initialize(wallet,{env:env})
-return
-//console.log(user)
-     console.log(PushAPI.payloads)
-     const apiResponse = await PushAPI.payloads.sendNotification({
-        signer:wallet,
-        type: 3, // subset
-        identityType: 2, // direct payload
-        notification: {
-          title: `Tag Scan: ${formatString(Ndef.util.bytesToString(tag.ndefMessage[0].payload))} ${formatString(Ndef.util.bytesToString(tag.ndefMessage[1].payload))} `,
-          body: `notification BODY`
-        },
-        payload: {
-          title: `Tag Scan: ${formatString(Ndef.util.bytesToString(tag.ndefMessage[0].payload))} ${formatString(Ndef.util.bytesToString(tag.ndefMessage[1].payload))} `,
-          body: `notification BODY`,
-          cta: '',
-          img: ''
-        },
-        recipients: [`eip155:5:${formatString(Ndef.util.bytesToString(tag.ndefMessage[8].payload))}`], // recipients addresses
-        channel: 'eip155:5:0x5858769800844ab75397775Ca2Fa87B270F7FbBe', // your channel address
-        env: ENV.staging
-      });
-
-      console.log(apiResponse)
-    //  const signer = await wallet.connect(provider)
-     // wallet.provider = provider;
-     // console.log(wallet.provider)
-     // const env = ENV.STAGING
-      //const x = await PushAPI.initialize(wallet,{env})
-   //   return
-      //console.warn(`Tag Scan: ${formatString(Ndef.util.bytesToString(tag.ndefMessage[0].payload))} ${formatString(Ndef.util.bytesToString(tag.ndefMessage[1].payload))} `)
-      //console.warn(`eip155:5:${formatString(Ndef.util.bytesToString(tag.ndefMessage[8].payload))}`)
+      console.log(tag)
+ 
     } catch (ex) {
       console.warn('Oops!', ex);
     } finally {

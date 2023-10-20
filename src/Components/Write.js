@@ -12,9 +12,10 @@ import "@ethersproject/shims"
 
 import {ethers} from 'ethers'
 import { useToast } from "react-native-toast-notifications";
-
+import { iceContractABI,iceContractAddress } from '../../contracts';
 
 const emergencySchema = Yup.object().shape({
+    
     firstname:Yup.string().required("First name is required"),
     lastname:Yup.string().required("Last name is required"),
     address:Yup.string().required("Address is required"),
@@ -22,22 +23,71 @@ const emergencySchema = Yup.object().shape({
     contact:Yup.string().required("Contact name is required"),
     contactphone:Yup.string().required("Contact phone is required")
 })
-NfcManager.start();export default function Write({route}) {
+NfcManager.start();
+export default function Write({route}) {
   const [text,setText] = useState("ICE ALERTS")
   const [selectedBloodType, setSelectedBloodType] = useState('A+');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [buttonColor,setButtonColor] = useState("green")
   const bloodTypes = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+  const [tagid,setTagId] = useState()
   const {privateKey} = route.params
   const [wallet,setWallet] = useState()
+  const [signer,setSigner] = useState()
   const toast = useToast()
- 
+  const [isScanning,setIsScanning] = useState(false)
+
   useEffect(()=>{
      const _wallet = new ethers.Wallet(privateKey)
      setWallet(_wallet)
+     const provider = new ethers.providers.JsonRpcProvider(
+      "https://api.calibration.node.glif.io/rpc/v1"
+    );
+
+    setSigner(_wallet.connect(provider))
+
 
   },[])
+
+
+  async function readNdef() {
+    try {
+
+      if(!isScanning)
+      {
+        setIsScanning(true)
+      }
+       
+      else{
+          setIsScanning(false)   
+          NfcManager.cancelTechnologyRequest();
+          return
+
+      }
+      // register for the NFC tag with NDEF in it
+      await NfcManager.requestTechnology(NfcTech.Ndef);
+      // the resolved tag object will contain `ndefMessage` property
+      const tag = await NfcManager.getTag();
+     
+      setTagId(tag.id)
+ 
+    } catch (ex) {
+      //console.warn('Oops!', ex);
+      toast.show("Error reading tag", {
+        type: "danger",
+        placement: "bottom",
+        duration: 4000,
+        offset: 120,
+        animationType: "slide-in",
+      });
+    } finally {
+      // stop the nfc scanning
+      NfcManager.cancelTechnologyRequest();
+      setIsScanning(false)
+    }
+  }
+
   async function writeNdef(values) {
     let result = false;
     setButtonColor('red')
@@ -57,6 +107,7 @@ NfcManager.start();export default function Write({route}) {
           .writeNdefMessage(bytes); // STEP 3
         result = true;
         setButtonColor('green')
+        registerTag()
       }
     } catch (ex) {
       toast.show("Error Writing Data to NFC Tag", {
@@ -80,6 +131,56 @@ NfcManager.start();export default function Write({route}) {
     setShowDatePicker(true);
   };
 
+  const registerTag = async()=>
+  {
+
+    if(!tagid)
+    {
+      toast.show("Scan tag before registering.", {
+        type: "danger",
+        placement: "bottom",
+        duration: 4000,
+        offset: 120,
+        animationType: "slide-in",
+      });
+
+      return
+    } 
+
+    const contract = new ethers.Contract(iceContractAddress, iceContractABI,signer);
+
+     try{
+
+      let tx = await contract.callStatic.createTag( tagid,"nocid")
+      let tx1 = await contract.createTag( tagid,"nocid")
+      await  tx1.wait()
+      toast.show("Smart tag successfully registered.", {
+        type: "success",
+        placement: "bottom",
+        duration: 4000,
+        offset: 120,
+        animationType: "slide-in",
+      });
+    
+
+
+     }catch(error)
+     {
+
+      console.log(error)
+      toast.show("Error registering smart tag.", {
+        type: "danger",
+        placement: "bottom",
+        duration: 4000,
+        offset: 120,
+        animationType: "slide-in",
+      });
+    } 
+
+     
+
+  }
+
   return (
     <ScrollView >
     
@@ -87,6 +188,10 @@ NfcManager.start();export default function Write({route}) {
              validationSchema={emergencySchema}
              >
         {(props)=>(<View style={styles.container}> 
+          <Button color={isScanning ? "red":"green"} onPress={readNdef} title='Scan Tag'/>
+          <Text style={styles.tagidText}>{`Tag Id: ${tagid ? tagid:""}`}</Text>
+
+
             <TextInput style={styles.input} placeholder='First Name' onChangeText={props.handleChange('firstname')} 
         value={props.values.firstname}/>
                 {props.errors.firstname && props.touched.firstname ?    <Text style={styles.errorText}>{props.errors.firstname}</Text>:null}
@@ -191,6 +296,14 @@ const styles = StyleSheet.create({
     fontSize:12,
     marginBottom:8
 
-    }
+    },
+    tagidText:{
+      fontSize:16,
+      fontWeight:"bold",
+      marginBottom:6,
+      marginTop:4,
+      textAlign:"center"
+  
+    },
 
 });
