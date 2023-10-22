@@ -122,7 +122,7 @@ useEffect(()=>{
 
      try{
 
-      let tx = await contract.callStatic.addEmergencyContact( address,name)
+      let tx = await contract.callStatic.addEmergencyContact(address, name)
       let tx1 = await contract.addEmergencyContact( address,name)
       await  tx1.wait()
       toast.show("Emergency contact successfully registered.", {
